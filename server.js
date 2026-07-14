@@ -30,9 +30,6 @@ server.listen(PORT, () => {
     console.log(`Servidor activo en puerto ${PORT}`);
 });
 
-const db = admin.database();
-console.log("URL de Base de Datos:", db.ref().toString());
-
 // --- NUEVO CRONÓMETRO MAESTRO (60 SEGUNDOS TOTALES) ---
 let contadorRondas = 0;
 
