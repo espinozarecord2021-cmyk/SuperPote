@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const path = require('path'); // ¡Necesitas esto!
+const path = require('path');
 const http = require('http');
 const { Server } = require("socket.io");
 const admin = require("firebase-admin");
@@ -9,9 +9,8 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Configuración de archivos estáticos
-app.use(express.json()); 
-app.use(express.static(path.join(__dirname, 'public'))); 
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Inicialización de Firebase
 admin.initializeApp({
@@ -22,6 +21,8 @@ admin.initializeApp({
     }),
     databaseURL: "https://superpote-e3dc4-default-rtdb.firebaseio.com/"
 });
+
+const db = admin.database(); // ¡Esta línea es la que faltaba!
 
 // ¡IMPORTANTE! Escucha en 'server', no en 'app'
 const PORT = process.env.PORT || 3000;
@@ -201,7 +202,6 @@ socket.on('admin_forzar_giro', (data) => {
 app.post('/deshacer-apuesta', async (req, res) => {
     const { userId } = req.body;
     
-    // 1. Buscamos en Firebase la última apuesta de este usuario
     const snapshot = await db.ref(`sistema/usuarios/${userId}/ultimaApuesta`).once('value');
     const apuesta = snapshot.val();
 
@@ -209,21 +209,15 @@ app.post('/deshacer-apuesta', async (req, res) => {
         return res.json({ success: false, message: "No hay apuestas recientes." });
     }
 
-    // 2. Realizamos la reversión matemática en el servidor (seguro)
     const monto = apuesta.monto;
     const figura = apuesta.figura;
 
     await db.ref(`sistema/usuarios/${userId}/saldo`).transaction(s => (s || 0) + monto);
     await db.ref(`sistema/apuestas_por_figura/${figura}`).transaction(m => Math.max(0, m - monto));
     
-    // 3. Borramos el registro para que no se pueda deshacer dos veces
     await db.ref(`sistema/usuarios/${userId}/ultimaApuesta`).remove();
 
     res.json({ success: true });
-});
-
-// ... el resto de tu código de Firebase ...
-    databaseURL: "https://superpote-e3dc4-default-rtdb.firebaseio.com/"
 });
 
 const PORT = process.env.PORT || 3000;
