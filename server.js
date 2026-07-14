@@ -4,15 +4,16 @@ const path = require('path');
 const http = require('http');
 const { Server } = require("socket.io");
 const admin = require("firebase-admin");
+const cors = require('cors'); // Movido arriba
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Inicialización de Firebase
 admin.initializeApp({
     credential: admin.credential.cert({
         projectId: process.env.PROJECT_ID,
@@ -22,13 +23,7 @@ admin.initializeApp({
     databaseURL: "https://superpote-e3dc4-default-rtdb.firebaseio.com/"
 });
 
-const db = admin.database(); // ¡Esta línea es la que faltaba!
-
-// ¡IMPORTANTE! Escucha en 'server', no en 'app'
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Servidor activo en puerto ${PORT}`);
-});
+const db = admin.database();
 
 // --- NUEVO CRONÓMETRO MAESTRO (60 SEGUNDOS TOTALES) ---
 let contadorRondas = 0;
@@ -186,16 +181,14 @@ io.on('connection', (socket) => {
             db.ref(`sistema/online/${socket.userId}`).remove();
         }
     });
-
-    // 3. Comando del Admin
-    // En tu socket.on('admin_forzar_giro')
-socket.on('admin_forzar_giro', (data) => {
-    if (data.token === "R0b3rt0206#") { 
-        db.ref('sistema/global/comandoGiro').set({ estado: "girando", indiceGanador: parseInt(data.indice) });
-    }
+    socket.on('admin_forzar_giro', (data) => {
+        if (data.token === "R0b3rt0206#") { 
+            db.ref('sistema/global/comandoGiro').set({ estado: "girando", indiceGanador: parseInt(data.indice) });
+        }
+    });
 });
+
 // --- PASO 2: LÓGICA DE DESHACER EN EL SERVIDOR ---
-// En server.js, actualiza la ruta /deshacer-apuesta
 app.post('/deshacer-apuesta', async (req, res) => {
     const { userId } = req.body;
     
