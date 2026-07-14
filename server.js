@@ -222,6 +222,11 @@ app.post('/deshacer-apuesta', async (req, res) => {
     res.json({ success: true });
 });
 
+// ... el resto de tu código de Firebase ...
+    databaseURL: "https://superpote-e3dc4-default-rtdb.firebaseio.com/"
+});
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Servidor activo en puerto ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`Servidor activo en puerto ${PORT}`);
+});
